@@ -13,7 +13,7 @@
 
 
 //Arduino Pro Mini (5V, 16MHZ) w/ ATMEGA 328
-int screen = 4; // Select screen to be shown: 0 - nothing, 1 - light, 2 - temp, 3 - sound, 4 - accel, 5 - all
+int screen = 5; // Select screen to be shown: 0 - nothing, 1 - light, 2 - temp, 3 - sound, 4 - accel, 5 - all
 
 #include <avr/pgmspace.h>  // Library with functions to access flash memory
 #include <Adafruit_GFX.h> // Adafruit graphics library - must download from adafruit.com and put in arduino/libraries directory
@@ -86,6 +86,9 @@ float gy;
 float gz;
 float g;
 
+//Function declarations
+void playThreeNotes();
+
 void setup()
 {
   // Set up output pins, set them all low
@@ -106,7 +109,7 @@ void setup()
 
   // Start 5110 LCD
   display.begin();
-  display.setContrast(60);  // sets screen contrast
+  display.setContrast(50);  // sets screen contrast
   display.clearDisplay();   // clears the screen and buffer
 
   Serial.begin(57600);  //Begin serial comm with BLE Mini via pin 0 and 1.
@@ -156,7 +159,7 @@ void loop()
     }
     else if (data0 == 0x05)  // Command is to play "The Star-Spangled Banner"
     {
-      play_banner();
+      playThreeNotes();
     }
     else if (data0 == 0x06)  // Command is to flash lights
     {
@@ -303,6 +306,8 @@ void read_button() // Function that checks if button is being pressed
     button_timestamp=millis();
     buttonState=!buttonState;
     digitalWrite(DISPLAY_LED_PIN, buttonState); // Toggle the LCD backlight when the button is pressed
+   
+	playThreeNotes(); 
     //    screen+=1;
     //    if (screen>=4)
     //    {
@@ -509,8 +514,8 @@ int frequency(char note)
   char names[] = { 
     'c', 'd', 'e', 'f', 'g', 'a', 'b', 'C'                                                                                           };
   int frequencies[] = {
-    262, 294, 330, 349, 392, 440, 494, 523                                                                                          };
-
+    131, 147, 165, 175, 196, 220, 247, 262                                                                                          };
+  
   // Now we'll search through the letters in the array, and if
   // we find it, we'll return the frequency for that note.
 
@@ -555,13 +560,49 @@ void play_banner() // Play the Star-Spangled Banner
   }
 }
 
+void playThreeNotes(){
+
+  int length = 16; // the number of notes
+  char notes[] = "CCCEDDEDCCCEDDEDC"; // a space represents a rest
+  int beats[] = { 
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+
+  int tempo = 225;
+
+  for (int i = 0; i < length; i++) {
+    if (notes[i] == ' ') {
+      delay(beats[i] * tempo); // rest
+    } 
+    else {
+      playNote_banner(notes[i], beats[i] * tempo);
+    }
+
+    // pause between notes
+    delay(tempo / 2); 
+  }
+}
+
 void playNote_banner(char note, int duration) {  // Set notes for Star-Spangled Banner
   char names[] = { 
-    'g', 'a', 'b', 'c', 'd', 'e', 'f', 'G'                                                                                               };
+    'A' , 'B' ,'C', 'D', 'E', 'F', 'G', 'a', 'b', 'c', 'd', 'e', 'f', 'g' };
   int tones[] = { 
-    2551, 2273, 2024, 1915, 1700, 1515, 1433, 1275                                                                                           }; // Note frequencies - range from G3 to G4
+	4546, //A
+	4048, //B
+	3830, //C
+	3400, //D
+	3030, //E
+	2866, //F
+    	2551, //G
+	2273, //a
+	2024, //b
+	1915, //c
+	1700, //d
+	1515, //e
+	1433, //f
+	1275  //g                                         
+        }; // Note frequencies - range from G3 to G4
 
-  for (int i = 0; i < 9; i++) {   // Play the tone corresponding to the note name
+  for (int i = 0; i < 14; i++) {   // Play the tone corresponding to the note name
     if (names[i] == note) {
       playTone(tones[i], duration);
     }
